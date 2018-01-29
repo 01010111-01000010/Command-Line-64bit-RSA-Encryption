@@ -5,20 +5,22 @@
 #include <stdio.h>
 #include <time.h> 
 #include <math.h>
-#include <iomanip>
 
+//Main Methods
 void menuInput();
-void generateKeyContainer();
 bool generateKey();
 void encryptMsg();
 void decryptMsg();
+void plaintextToInt();
+void intToPlaintext();
+//Sub-Routines
+void generateKeyContainer();
 bool inputVerify(char selection);
 unsigned long long primePicker();
 unsigned long long gcd(unsigned long long a, unsigned long long b);
 unsigned long long modInverse(unsigned long long e, unsigned long long k);
 unsigned long long gcdE(unsigned long long e, unsigned long long k, unsigned long long *x, unsigned long long *y);
 unsigned long long crypto(unsigned long long n, unsigned long long e, unsigned long long m);
-void testZone();
 
 int main () {
 	
@@ -28,12 +30,13 @@ int main () {
 	
 	menuInput();
 	
+	std::cout << std::endl;
 	return 0;
 }
 
 void menuInput(){
 	
-	std::cout << "Wilson Blaikie's RSA Implementation Ver 0.1" << std::endl;
+	std::cout << "Wilson Blaikie's RSA Implementation Ver 1.0" << std::endl;
 	std::cout << "Please select" << std::endl;
 	std::cout << "g: Generate Keys, e: Encryption, d: Decryption, p: Translate Plaintext, n: Translate Number, q: Quit" << std::endl;
 	
@@ -47,13 +50,13 @@ void menuInput(){
 		encryptMsg();
 	} else if (selection == 'd') {
 		decryptMsg();
+	} else if (selection == 'p') {
+		plaintextToInt();
+	} else if (selection == 'n') {
+		intToPlaintext();
 	} else if (selection == 'q') {
 		std::cout << "Quitting..." << std::endl;
 		return;
-	//PRODUCTION IMPLEMENTATION FUNCTION
-	} else if (selection == 't') {
-		testZone();
-	//REMOVE AFTER COMPLETION
 	} else {
 		std::cout << "ERROR: Invalid Input" << std::endl;
 		menuInput();
@@ -72,7 +75,7 @@ bool generateKey() {
 	//IDEA: Add an advanced key generation that display all steps and provides all numbers for reference & then do a simple one that just spits out n,e,d
 	std::cout << std::endl;
 	printf("\033c");
-	std::cout << "Wilson Blaikie's RSA Implementation Ver 0.1" << std::endl;
+	std::cout << "Wilson Blaikie's RSA Implementation Ver 1.0" << std::endl;
 	std::cout << std::endl;
 	std::cout << "Key Generation" << std::endl;
 	std::cout << "Calculating primes" << std::endl;
@@ -87,7 +90,7 @@ bool generateKey() {
 	unsigned long long e = 65537;
 	
 	
-	// EXAMPLE INPUT: [BASE 27 (a-z+space)]
+	// EXAMPLE INPUT: [BASE 27 (a-z+space) DIFFERENT TO PACKET CONSTRUCTION METHOD]
 	// abcdefghijklmnopqrstuvwxyz_
 	// 123456789012345678901234560
 	// TE = 2005
@@ -156,14 +159,15 @@ void encryptMsg() {
 	std::vector<unsigned long long> intList; 
 	
 	//Prompt for key
+	std::cout << std::endl;
 	std::cout << "Please enter public key component n: ";
 	std::cin >> inputMod;
+	std::cout << std::endl;
 	
 	while (prompt != false) {
 		unsigned long long convert = 0;
 	
 		//Prompt for number
-		std::cout << std::endl;
 		std::cout << "Enter a number for encryption m: ";
 		std::cin >> convert;
 	
@@ -205,18 +209,19 @@ void decryptMsg() {
 	std::vector<unsigned long long> intList;
 	
 	//Prompt for key
+	std::cout << std::endl;
 	std::cout << "Please enter public key component n: ";
 	std::cin >> inputMod;
 	
 	//Prompt for d
 	std::cout << "Please enter private key component d: ";
 	std::cin >> inputD;
+	std::cout << std::endl;
 	
 	while (prompt != false) {
 		unsigned long long convert = 0;
 	
 		//Prompt for number
-		std::cout << std::endl;
 		std::cout << "Enter a number for decryption c: ";
 		std::cin >> convert;
 	
@@ -242,7 +247,7 @@ void decryptMsg() {
 	
 	//PRINT ALL OUTPUTS
 	std::cout << std::endl;
-	std::cout << "Encryption List" << std::endl;
+	std::cout << "Decryption List" << std::endl;
 	for (int i = 0; i < intList.size(); i++){
 		std::cout << intList[i] << std::endl;
 	}
@@ -326,84 +331,130 @@ unsigned long long crypto(unsigned long long n, unsigned long long e, unsigned l
 	return res;
 }
 
-void testZone() {
-	/*
-	//Initialise converters
-	int exp = 0;
-	unsigned long long seg = 0;
-	int intermed[4] = {0, 0, 0, 0};
-	std::vector<std::string> convec;
-	std::vector<unsigned long long> intvec;
+void plaintextToInt(){
+	//Initialise conversion data structures
+	std::string convert;
+	std::vector<char> convec;
+	std::vector<int> intvec;
 	
-	//Convert string into n number of x*10^3 sub-arrays
-	while (convert > 0) {
-		signed int endstr = 0;
-		//If remaining string is smaller than default carriage size
-		if (convert.size() < 4) {
-			convert.copy(intermed, convert.size(), 0);
-			convec.insert(convec.begin(), intermed);
-			
-			//Remove all remaining chars
-			while (convert.size() > 0) {
-				convert.pop_back();
-			}
-			
-		//If string is default carriage size	
-		} else {
-			endstr = convert.size() - 4;
-			convert.copy(intermed, 4, endstr);
-			convec.insert(convec.begin(), intermed);
-			
-			for (int i = 0; i < 4; i++) {
-				convert.pop_back();
-			}
+	
+	//Prompt & receive plaintext input
+	std::cout << std::endl;
+	std::cout << "Enter a plaintext message to be converted into integer packets" << std::endl;
+	std::cin.ignore();
+	std::getline (std::cin, convert);
+	
+	//Copy string to char vector & execute packet conversion
+	std::copy( convert.begin(), convert.end(), std::back_inserter(convec));
+	
+	for (int i = 0; i < (convec.size()/4); i++) {
+		int parse = 0;
+		int mult = 1000000;
+		for (int j = 0; j < 4; j++) {
+			int index = (i*4)+j;
+			parse += (convec[index] - 31)* mult;
+			mult /= 100;
 		}
-		for (int i = 0; i < 4; i++) {
-			intermed[i] = 0;
-		}
+		intvec.push_back(parse);
 	}
 	
-	//Convert into int type for modinv
-	unsigned long long sequence = 0;
-	
-	for (int i = 0; i < convec.size(); i++) {
-		sequence = 0;
-		convert = convec[i];
-		for (int i = 0; i < convert.size(); i++) {
-			sequence = (sequence * 100) + (convert[i] - 31);
+	int parse = 0;
+	for (int i = 0; i < convec.size()%4; i++) {
+		int mult = 1;
+		int index = (convec.size()/4)*4 + i;
+		
+		for (int j = 0; j < (convec.size()%4)-1; j++) {
+			mult *= 100;
 		}
-		intvec.push_back(sequence);
-		convec[i] = "";
+		parse += (convec[index] - 31)* mult;
+		mult /= 100;
+	}
+	if (parse != 0) {
+		intvec.push_back(parse);
 	}
 	
-	//Modinv vector elements
+	//Print packets
+	std::cout << std::endl;
+	std::cout << "Integer Packets" << std::endl;
 	for (int i = 0; i < intvec.size(); i++) {
-		intvec[i] = crypto(inputMod, 65537, intvec[i]);
+		std::cout << intvec[i] << std::endl;
 	}
 	
-	//Turn intvec elements back into plaintext
-	int int2char = 0;
-	char addChar = 0;
-	for (int i = 0; i < intvec.size(); i++) {
-		while (intvec[i] > 0) {
-			int2char = 0;
-			//Translate individual chars
-			for (int j = 0; j < 2; j++) {
-				if (j == 0) {
-					int2char = int2char + (intvec[i] % 10);
-				} else {
-					int2char = int2char + ((intvec[i] % 10) * 10);
-				}
-				intvec[i] = intvec[i] / 10;
-			}
-			addChar = int2char + 31;
-			convec[i].insert(0, 1, addChar);
-		}
-	}
-	
-	for (int i = 0; i < convec.size(); i++) {
-		std::cout << convec[i] << std::endl;
-	}
+	std::cout << std::endl;
+	menuInput();
 }
-	*/
+
+void intToPlaintext() {
+	//Initialise conversion data structures
+	std::vector<int> intvec;
+	std::vector<char> convec;
+	bool prompt = true;
+	
+	//Take input packets
+	std::cout << std::endl;
+	
+	while (prompt != false) {
+		int convert = 0;
+		
+		std::cout << "Enter integer packet to be converted into plaintext" << std::endl;
+		
+		std::cin >> convert;
+		intvec.push_back(convert);
+		
+		char selection;
+		bool ver = false;
+		
+		std::cout << "Are there any additional inputs (y/n)" << std::endl;
+		
+		while (ver != true) {
+			std::cin >> selection;
+			ver = inputVerify(selection);
+		}
+		
+		if (selection == 'n') {
+			prompt = false;
+		}
+	}
+	
+	//Convert packets to chars
+	for (int i = 0; i < intvec.size(); i++) {
+		if (intvec[i] <= 99) {
+			convec.push_back(intvec[i]+31);
+		} else if (intvec[i] >= 100 && intvec[i] <= 9999) {
+			int mult = 100;
+			for (int j = 0; j < 2; j++) {
+				int instance = intvec[i]/mult;
+				convec.push_back(instance+31);
+				intvec[i] -= instance*mult;
+				mult /= 100;
+			}
+		} else if (intvec[i] >= 10000 && intvec[i] <= 999999) {
+			int mult = 10000;
+			for (int j = 0; j < 3; j++) {
+				int instance = intvec[i]/mult;
+				convec.push_back(instance+31);
+				intvec[i] -= instance*mult;
+				mult /= 100;
+			}
+		} else if (intvec[i] >= 1000000 && intvec[i] <= 99999999) {
+			int mult = 1000000;
+			for (int j = 0; j < 4; j++) {
+				int instance = intvec[i]/mult;
+				convec.push_back(instance+31);
+				intvec[i] -= instance*mult;
+				mult /= 100;
+			}
+		}
+	}
+	
+	//Concatenate into string & output
+	std::cout << std::endl;
+	std::cout << "Plaintext" << std::endl;
+	for (int i = 0; i < convec.size(); i++) {
+		std::cout << convec[i];
+	}
+	std::cout << std::endl;
+	std::cout << std::endl;
+	
+	menuInput();
 }
